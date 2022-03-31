@@ -23,6 +23,13 @@
       "dependencies": {},
       "hash": "52b5f5d526bbd170a699f009a832b1d7cf02328a"
     },
+    "com.gwaredd.unium": {
+      "version": "https://github.com/yavin87/unium.git?path=/Assets/Unium",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "6eab73b3045011102303006f8c8fcbad14722e5b"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
