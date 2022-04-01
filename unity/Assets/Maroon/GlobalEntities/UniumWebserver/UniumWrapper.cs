@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
-using System;
 using System.IO;
-using TMPro;
-using UnityEngine.UI;
 
 namespace Maroon.GlobalEntities
 {
@@ -16,6 +13,7 @@ namespace Maroon.GlobalEntities
 
         MonoBehaviour GlobalEntity.Instance => Instance;
         
+#if !UNIUM_DISABLE && ( DEVELOPMENT_BUILD || UNITY_EDITOR || UNIUM_ENABLE )
         void Start()
         {
             var assetPath = "TestAutomation/index.html";
@@ -37,5 +35,6 @@ namespace Maroon.GlobalEntities
                 Debug.LogError( "Failed to find file: " + index);
             }
         }
+#endif
     }
 }
