@@ -22,7 +22,7 @@ namespace Tests.ContentValidation
     
             var scenePath = scene.path;
             var experimentName = _experimentNameRegex.Match(scenePath).ToString();
-            var groupNamesString = $"\"{experimentName}\".*";
+            var sceneTestsGroupName = $"\"{experimentName}\".*";
 
             // Only test scenes in experiments folder
             if (!scenePath.Contains("experiments"))
@@ -37,7 +37,7 @@ namespace Tests.ContentValidation
                 filters = new[] 
                 { new Filter
                     {
-                        groupNames = new [] { groupNamesString },
+                        groupNames = new [] { sceneTestsGroupName },
                         testMode = TestMode.EditMode
                     }
                 }
