@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Text.RegularExpressions;
+using GEAR.Localization;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -31,42 +32,92 @@ namespace Tests.ContentValidation
                 _scene = EditorSceneManager.OpenScene(_scenePath, OpenSceneMode.Single);
         }
         
-        [Test]
-        public void SceneHasMainCamera()
+        [Test, Description("Must have a Game Object with enabled <Camera> component tagged as 'MainCamera'")]
+        public void CheckMainCamera()
         {
-            Assert.That(GameObject.FindWithTag("MainCamera"));
+            // Check Game Object exists
+            var cameraGameObject = GameObject.FindWithTag("MainCamera");
+            Assert.NotNull(cameraGameObject, "No 'MainCamera' Game Object found");
+
+            // Check Camera component and its settings
+            var cameraComponent = cameraGameObject.GetComponent<Camera>();
+            Assert.NotNull(cameraComponent, "No 'Camera' component in Game Object 'MainCamera'");
+            
+            Assert.True(cameraComponent.enabled, 
+                "The 'Camera' component of 'MainCamera' is disabled");
         }
         
-        [Test]
-        public void SceneHasUICamera()
+        [Test, Description("Must have a Game Object named 'UICamera' with configured <Camera> component")]
+        public void CheckUICamera()
         {
-            Assert.That(GameObject.Find("UICamera"));
+            // Check Game Object exists
+            var cameraGameObject = GameObject.Find("UICamera");
+            Assert.NotNull(cameraGameObject, "No 'UICamera' Game Object found");
+
+            // Check Camera component and its settings
+            var cameraComponent = cameraGameObject.GetComponent<Camera>();
+            Assert.NotNull(cameraComponent, "No 'Camera' component in Game Object 'UICamera'");
+            
+            Assert.True(cameraComponent.enabled,
+                "The 'Camera' component of 'UICamera' is disabled");
+            
+            Assert.AreEqual(LayerMask.GetMask("UI"), cameraComponent.cullingMask,
+                "Wrong culling mask for 'Camera' component of 'UICamera'");
+            
+            Assert.True(cameraComponent.orthographic,
+                "Wrong projection type for 'Camera' component of 'UICamera'");
+        }
+
+        [Test, Description("Must have a Game Object named 'UI' with configured 'Canvas' component")]
+        public void CheckUI()
+        {
+            // Check Game Object exists
+            var uiGameObject = GameObject.Find("UI");
+            Assert.NotNull(uiGameObject, "No 'UI' Game Object found");
+            
+            // Check layer
+            Assert.AreEqual(LayerMask.GetMask("UI"), uiGameObject.layer);
+            
+            // Check Canvas component and its settings
+            var canvasComponent = uiGameObject.GetComponent<Canvas>();
+            Assert.NotNull(canvasComponent, "No 'Canvas' component in Game Object 'UI'");
+            Assert.AreEqual(RenderMode.ScreenSpaceCamera,canvasComponent.renderMode);
         }
         
-        [Test]
+        // TODO stopped here with updating old tests (also VR tests not started updating yet)
+        [Test, Description("Experiment scenes must use the ExperimentRoom Prefab")]
         public void SceneHasExperimentRoom()
         {
-            Assert.That(GameObject.Find("ExperimentRoom"));
+            var experimentRoomGameObject = GameObject.Find("ExperimentRoom");
+            Assert.That(experimentRoomGameObject);
         }
         
-        [Test]
+        [Test, Description("Experiment scenes must include the SimulationController Prefab")]
         public void SceneHasSimulationController()
         {
+            // This scene is an exception
             if (_experimentName.Contains("Whiteboard"))
                 Assert.Ignore("Whiteboard scene has intentionally no SimulationController");
             Assert.That(GameObject.Find("SimulationController"));
         }
         
-        [Test]
+        [Test, Description("Experiment scenes must include the LanguageManager Prefab")]
         public void SceneHasLanguageManager()
         {
-            Assert.That(GameObject.Find("LanguageManager"));
+            var languageManagerGameObject = GameObject.Find("LanguageManager");
+            Assert.That(languageManagerGameObject);
+            
+            // The package provides an assembly definition, enabling us to directly check for the script component
+            var languageManagerScriptComponent = languageManagerGameObject.GetComponent<LanguageManager>();
+            Assert.That(languageManagerScriptComponent);
         }
         
-        [Test]
+        [Test, Description("Experiment scenes must include the GlobalEntities Prefab")]
         public void SceneHasGlobalEntities()
         {
             Assert.That(GameObject.Find("GlobalEntities"));
+            var asd = GameObject.Find("GlobalEntities");
+            // var dfg = asd.GetComponent<GlobalEntities>();
         }
         
         // Provides experiment names and scene paths to the test fixture
