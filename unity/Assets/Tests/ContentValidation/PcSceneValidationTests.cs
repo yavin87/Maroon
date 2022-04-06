@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using GEAR.Localization;
 using NUnit.Framework;
@@ -6,6 +9,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Tests.ContentValidation
 {
@@ -32,94 +36,132 @@ namespace Tests.ContentValidation
                 _scene = EditorSceneManager.OpenScene(_scenePath, OpenSceneMode.Single);
         }
         
-        [Test, Description("Must have a Game Object with enabled <Camera> component tagged as 'MainCamera'")]
-        public void CheckMainCamera()
+        [Test, Description("Must have a GameObject with enabled <Camera> component tagged as 'MainCamera'")]
+        public void SceneHasAndCheckMainCamera()
         {
-            // Check Game Object exists
+            // Check GameObject exists
             var cameraGameObject = GameObject.FindWithTag("MainCamera");
-            Assert.NotNull(cameraGameObject, "No 'MainCamera' Game Object found");
+            Assert.NotNull(cameraGameObject, "No 'MainCamera' GameObject found");
 
             // Check Camera component and its settings
             var cameraComponent = cameraGameObject.GetComponent<Camera>();
-            Assert.NotNull(cameraComponent, "No 'Camera' component in Game Object 'MainCamera'");
+            Assert.NotNull(cameraComponent, "No 'Camera' component in GameObject 'MainCamera'");
             
             Assert.True(cameraComponent.enabled, 
                 "The 'Camera' component of 'MainCamera' is disabled");
         }
         
-        [Test, Description("Must have a Game Object named 'UICamera' with configured <Camera> component")]
-        public void CheckUICamera()
+        [Test, Description("Must have a GameObject named 'UICamera' with configured <Camera> component")]
+        public void SceneHasAndCheckUICamera()
         {
-            // Check Game Object exists
+            // Check GameObject exists
             var cameraGameObject = GameObject.Find("UICamera");
-            Assert.NotNull(cameraGameObject, "No 'UICamera' Game Object found");
+            Assert.NotNull(cameraGameObject, "No 'UICamera' GameObject found");
 
             // Check Camera component and its settings
             var cameraComponent = cameraGameObject.GetComponent<Camera>();
-            Assert.NotNull(cameraComponent, "No 'Camera' component in Game Object 'UICamera'");
+            Assert.NotNull(cameraComponent, "No 'Camera' component in GameObject 'UICamera'");
             
             Assert.True(cameraComponent.enabled,
                 "The 'Camera' component of 'UICamera' is disabled");
             
             Assert.AreEqual(LayerMask.GetMask("UI"), cameraComponent.cullingMask,
                 "Wrong culling mask for 'Camera' component of 'UICamera'");
-            
+
             Assert.True(cameraComponent.orthographic,
                 "Wrong projection type for 'Camera' component of 'UICamera'");
         }
 
-        [Test, Description("Must have a Game Object named 'UI' with configured 'Canvas' component")]
-        public void CheckUI()
+        [Test, Description("Must have a GameObject named 'UI' with configured 'Canvas' component")]
+        public void SceneHasAndCheckUserInterface()
         {
-            // Check Game Object exists
-            var uiGameObject = GameObject.Find("UI");
-            Assert.NotNull(uiGameObject, "No 'UI' Game Object found");
+            /* TODO food for thought
+             * Is direct comparison against prefab a good idea? Could throw unexpected errors when a prefab is changed
+             * in a fundamental way.
+             * On the other hand, if we check for hardcoded values and a prefab is changed, a test checking against it
+             * will fail either way.
+             * What could we do to mitigate broken scene tests? Run prefab tests before scene tests and stop test run!
+             * This should reduce any possible confusion with broken prefab checks in scene tests.
+             *
+             * What about child objects like EventSystem?
+             * Is it possible to compare Prefab's and GameObject's child?
+             * Is there any other way to compare a GameObject with its Prefab? I haven't found a way yet.
+             * Random idea, but couldn't get GUID of GameObject to compare with either.
+             * 
+             * Anyway, stopped here with a mix of prefab and hardcoded comparisons.
+             */
             
-            // Check layer
-            Assert.AreEqual(LayerMask.GetMask("UI"), uiGameObject.layer);
+            // Get prefab data
+            var prefab = ContentValidationUtils.GetPrefabByName("UI");
+            var prefabCanvas = ContentValidationUtils.GetComponentFromPrefab<Canvas>(prefab);
+
+            // Check GameObject exists
+            var uiGameObject = GameObject.Find("UI");
+            Assert.NotNull(uiGameObject, "No 'UI' GameObject found");
+            
+            // Check GameObject is set to UI layer
+            Assert.AreEqual(prefab.layer, uiGameObject.layer);
+            //Assert.AreEqual(LayerMask.NameToLayer("UI"), uiGameObject.layer);
             
             // Check Canvas component and its settings
             var canvasComponent = uiGameObject.GetComponent<Canvas>();
-            Assert.NotNull(canvasComponent, "No 'Canvas' component in Game Object 'UI'");
-            Assert.AreEqual(RenderMode.ScreenSpaceCamera,canvasComponent.renderMode);
+            Assert.NotNull(canvasComponent, "No 'Canvas' component in GameObject 'UI'");
+            Assert.AreEqual(prefabCanvas.renderMode,canvasComponent.renderMode);
+            // Assert.AreEqual(RenderMode.ScreenSpaceCamera, canvasComponent.renderMode);
+
+            // Check Canvas Scaler component and its settings
+            var canvasScalerComponent = uiGameObject.GetComponent<CanvasScaler>();
+            Assert.NotNull(canvasScalerComponent, "No 'Canvas Scaler' component in GameObject 'UI'");
+            Assert.AreEqual(CanvasScaler.ScaleMode.ScaleWithScreenSize, canvasScalerComponent.uiScaleMode);
+
+            // Check EventSystem exists
+            var eventSystem = GameObject.Find("EventSystem");
+            Assert.NotNull(eventSystem, "No 'EventSystem' GameObject found");
+            Assert.AreEqual(uiGameObject.transform, eventSystem.transform.parent, "EventSystem is not a child GameObject of 'UI'");
         }
         
-        // TODO stopped here with updating old tests (also VR tests not started updating yet)
-        [Test, Description("Experiment scenes must use the ExperimentRoom Prefab")]
+        [Test, Description("Must use the 'ExperimentRoom' Prefab")]
         public void SceneHasExperimentRoom()
         {
+            // Check GameObject exists
             var experimentRoomGameObject = GameObject.Find("ExperimentRoom");
-            Assert.That(experimentRoomGameObject);
+            Assert.NotNull(experimentRoomGameObject, "No 'ExperimentRoom' GameObject found");
         }
         
-        [Test, Description("Experiment scenes must include the SimulationController Prefab")]
+        [Test, Description("Must include the 'SimulationController' Prefab")]
         public void SceneHasSimulationController()
         {
-            // This scene is an exception
-            if (_experimentName.Contains("Whiteboard"))
-                Assert.Ignore("Whiteboard scene has intentionally no SimulationController");
-            Assert.That(GameObject.Find("SimulationController"));
+            // List of scenes that skip the test
+            List<string> scenesToSkip = new List<string>() { "Whiteboard" };
+            
+            // Skip listed scene(s)
+            if (scenesToSkip.Any(x => _experimentName.ToUpper().Contains(x.ToUpper())))
+                Assert.Ignore($"{_experimentName} scene has intentionally no SimulationController");
+
+            // Check GameObject exists
+            var simulationControllerGameObject = GameObject.Find("SimulationController");
+            Assert.NotNull(simulationControllerGameObject, "No 'SimulationController' GameObject found");
         }
         
-        [Test, Description("Experiment scenes must include the LanguageManager Prefab")]
+        [Test, Description("Must include the 'LanguageManager' Prefab")]
         public void SceneHasLanguageManager()
         {
+            // Check GameObject exists
             var languageManagerGameObject = GameObject.Find("LanguageManager");
-            Assert.That(languageManagerGameObject);
+            Assert.NotNull(languageManagerGameObject, "No 'LanguageManager' GameObject found");
             
             // The package provides an assembly definition, enabling us to directly check for the script component
             var languageManagerScriptComponent = languageManagerGameObject.GetComponent<LanguageManager>();
-            Assert.That(languageManagerScriptComponent);
+            Assert.NotNull(languageManagerScriptComponent, "No 'LanguageManager' component in GameObject 'LanguageManager'");
         }
         
-        [Test, Description("Experiment scenes must include the GlobalEntities Prefab")]
+        [Test, Description("Must include the 'GlobalEntities' Prefab")]
         public void SceneHasGlobalEntities()
         {
-            Assert.That(GameObject.Find("GlobalEntities"));
-            var asd = GameObject.Find("GlobalEntities");
-            // var dfg = asd.GetComponent<GlobalEntities>();
+            var globalEntitiesGameObject = GameObject.Find("GlobalEntities");
+            Assert.NotNull(globalEntitiesGameObject, "No 'GlobalEntities' GameObject found");
         }
-        
+
         // Provides experiment names and scene paths to the test fixture
         private class PcScenesProvider : IEnumerable
         {
