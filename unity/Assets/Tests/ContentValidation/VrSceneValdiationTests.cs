@@ -45,14 +45,14 @@ namespace Tests.ContentValidation
         public void SceneHasIndoorWorld()
         {
             var indoorWorldGameObject = GameObject.Find("Indoor World") ?? GameObject.Find("IndoorWorld");
-            Assert.NotNull(indoorWorldGameObject, "No 'IndoorWorld' GameObject found");
+            Assert.NotNull(indoorWorldGameObject, "No 'IndoorWorld' or 'Indoor World' GameObject found");
         }
         
         [Test, Description("Must include a 'preDoorVR' Prefab")]
         public void SceneHasDoorMesh()
         {
             var doorGameObject = GameObject.Find("preDoorVR") ?? GameObject.Find("Door");
-            Assert.NotNull(doorGameObject, "No 'preDoorVR' GameObject found");
+            Assert.NotNull(doorGameObject, "No 'preDoorVR' or 'Door' GameObject found");
         }
         
         [Test, Description("Must include the 'WhiteboardInteractive' Prefab")]
