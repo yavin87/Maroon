@@ -38,11 +38,11 @@ namespace Tests.ContentValidation
         }
         
         [Test, Description("Must have a GameObject with enabled <Camera> component tagged as 'MainCamera'")]
-        public void SceneHasAndCheckMainCamera()
+        public void SceneHasMainCamera()
         {
             // Check GameObject exists
             var cameraGameObject = GameObject.FindWithTag("MainCamera");
-            Assert.NotNull(cameraGameObject, "No 'MainCamera' GameObject found");
+            Assert.NotNull(cameraGameObject, "No GameObject tagged 'MainCamera' found");
 
             // Check Camera component and its settings
             var cameraComponent = cameraGameObject.GetComponent<Camera>();
@@ -53,7 +53,7 @@ namespace Tests.ContentValidation
         }
         
         [Test, Description("Must have a GameObject named 'UICamera' with configured <Camera> component")]
-        public void SceneHasAndCheckUICamera()
+        public void SceneHasUICamera()
         {
             // Check GameObject exists
             var cameraGameObject = GameObject.Find("UICamera");
@@ -74,7 +74,7 @@ namespace Tests.ContentValidation
         }
 
         [Test, Description("Must have a GameObject named 'UI' with configured 'Canvas' component")]
-        public void SceneHasAndCheckUserInterface()
+        public void SceneHasUserInterface()
         {
             /* TODO food for thought
              * Is direct comparison against prefab a good idea? Could throw unexpected errors when a prefab is changed
@@ -165,9 +165,12 @@ namespace Tests.ContentValidation
             Assert.NotNull(globalEntitiesGameObject, "No 'GlobalEntities' GameObject found");
         }
         
-        // TODO check for door
-        
-        // TODO check for pause menu
+        [Test, Description("Must include the 'prePauseMenu' Prefab")]
+        public void SceneHasPauseMenu()
+        {
+            var pauseMenuGameObject = GameObject.Find("prePauseMenu") ?? GameObject.Find("PauseMenu");
+            Assert.NotNull(pauseMenuGameObject, "No 'prePauseMenu' or 'PauseMenu' GameObject found");
+        }
 
         // Provides experiment names and scene paths to the test fixture
         private class PcScenesProvider : IEnumerable
