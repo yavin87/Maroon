@@ -1,4 +1,6 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
@@ -31,46 +33,61 @@ namespace Tests.ContentValidation
                 _scene = EditorSceneManager.OpenScene(_scenePath, OpenSceneMode.Single);
         }
         
-        [Test]
+        [Test, Description("Must include a 'PlayerVR' Prefab tagged as 'Player'")]
         public void SceneHasPlayer()
         {
-            Assert.That(GameObject.FindWithTag("Player"));
+            var playerGameObject = GameObject.Find("PlayerVR");
+            Assert.NotNull(playerGameObject, "No 'Player' GameObject found");
+            Assert.AreEqual("Player", playerGameObject.tag, "GameObject 'PlayerVR' not tagged as 'Player'");
         }
 
-        [Test]
+        [Test, Description("Must include an 'IndoorWorld' Prefab")]
         public void SceneHasIndoorWorld()
         {
-            Assert.That(
-                GameObject.Find("Indoor World") ||
-                GameObject.Find("IndoorWorld"));
+            var indoorWorldGameObject = GameObject.Find("Indoor World") ?? GameObject.Find("IndoorWorld");
+            Assert.NotNull(indoorWorldGameObject, "No 'IndoorWorld' GameObject found");
         }
         
-        [Test]
+        [Test, Description("Must include a 'preDoorVR' Prefab")]
         public void SceneHasDoorMesh()
         {
-            Assert.That(GameObject.Find("mshDoor"));
+            var doorGameObject = GameObject.Find("preDoorVR") ?? GameObject.Find("Door");
+            Assert.NotNull(doorGameObject, "No 'preDoorVR' GameObject found");
         }
         
-        [Test]
+        [Test, Description("Must include the 'WhiteboardInteractive' Prefab")]
         public void SceneHasWhiteboardInteractive()
         {
-            if (_experimentName.Contains("FaradaysLaw"))
-                Assert.Ignore("FaradaysLaw scene has intentionally no WhiteboardInteractive");
-            Assert.That(GameObject.Find("WhiteboardInteractive"));
+            // List of scenes that skip the test
+            var scenesToSkip = new List<string> { "FaradaysLaw" };
+            
+            // Skip listed scene(s)
+            if (scenesToSkip.Any(x => _experimentName.ToUpper().Contains(x.ToUpper())))
+                Assert.Ignore($"{_experimentName} scene has intentionally no 'WhiteBoardInteractive'");
+
+            var whiteboardInteractiveGameObject = GameObject.Find("WhiteboardInteractive");
+            Assert.NotNull(whiteboardInteractiveGameObject, "No 'WhiteboardInteractive' GameObject found");
         }
         
-        [Test]
+        [Test, Description("Must include the 'LanguageManager' Prefab")]
         public void SceneHasLanguageManager()
         {
-            if (_experimentName.Contains("Whiteboard"))
-                Assert.Ignore("Whiteboard scene has intentionally no LanguageManager");
-            Assert.That(GameObject.Find("LanguageManager"));
+            // List of scenes that skip the test
+            var scenesToSkip = new List<string> { "Whiteboard" };
+            
+            // Skip listed scene(s)
+            if (scenesToSkip.Any(x => _experimentName.ToUpper().Contains(x.ToUpper())))
+                Assert.Ignore($"{_experimentName} scene has intentionally no 'LanguageManager'");
+
+            var languageManagerGameObject = GameObject.Find("LanguageManager"); 
+            Assert.NotNull(languageManagerGameObject);
         }
         
-        [Test]
+        [Test, Description("Must include the 'GlobalEntities' Prefab")]
         public void SceneHasGlobalEntities()
         {
-            Assert.That(GameObject.Find("GlobalEntities"));
+            var globalEntitiesGameObject = GameObject.Find("GlobalEntities"); 
+            Assert.NotNull(globalEntitiesGameObject, "No 'GlobalEntities' GameObject found");
         }
         
         // Provides experiment names and scene paths to the test fixture
