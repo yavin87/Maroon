@@ -7,7 +7,7 @@ namespace Maroon.GlobalEntities
     {
         bool openBrowser = true;
         bool openOnce = true;
-        public GameObject testBannerPrefab;
+        [SerializeField] GameObject testBannerPrefab;
         
         public static UniumWrapper Instance => (UniumWrapper)Singleton;
 
