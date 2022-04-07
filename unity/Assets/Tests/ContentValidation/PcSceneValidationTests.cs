@@ -7,6 +7,7 @@ using GEAR.Localization;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -77,7 +78,7 @@ namespace Tests.ContentValidation
         {
             /* TODO food for thought
              * Is direct comparison against prefab a good idea? Could throw unexpected errors when a prefab is changed
-             * in a fundamental way.
+             * in an impactful way.
              * On the other hand, if we check for hardcoded values and a prefab is changed, a test checking against it
              * will fail either way.
              * What could we do to mitigate broken scene tests? Run prefab tests before scene tests and stop test run!
@@ -94,6 +95,7 @@ namespace Tests.ContentValidation
             // Get prefab data
             var prefab = ContentValidationUtils.GetPrefabByName("UI");
             var prefabCanvas = ContentValidationUtils.GetComponentFromPrefab<Canvas>(prefab);
+            var prefabCanvasScaler = ContentValidationUtils.GetComponentFromPrefab<CanvasScaler>(prefab);
 
             // Check GameObject exists
             var uiGameObject = GameObject.Find("UI");
@@ -112,7 +114,8 @@ namespace Tests.ContentValidation
             // Check Canvas Scaler component and its settings
             var canvasScalerComponent = uiGameObject.GetComponent<CanvasScaler>();
             Assert.NotNull(canvasScalerComponent, "No 'Canvas Scaler' component in GameObject 'UI'");
-            Assert.AreEqual(CanvasScaler.ScaleMode.ScaleWithScreenSize, canvasScalerComponent.uiScaleMode);
+            Assert.AreEqual(prefabCanvasScaler.uiScaleMode, canvasScalerComponent.uiScaleMode);
+            //Assert.AreEqual(CanvasScaler.ScaleMode.ScaleWithScreenSize, canvasScalerComponent.uiScaleMode);
 
             // Check EventSystem exists
             var eventSystem = GameObject.Find("EventSystem");
