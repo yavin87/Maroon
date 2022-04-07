@@ -135,7 +135,7 @@ namespace Tests.ContentValidation
         public void SceneHasSimulationController()
         {
             // List of scenes that skip the test
-            List<string> scenesToSkip = new List<string>() { "Whiteboard" };
+            var scenesToSkip = new List<string> { "Whiteboard" };
             
             // Skip listed scene(s)
             if (scenesToSkip.Any(x => _experimentName.ToUpper().Contains(x.ToUpper())))
@@ -164,6 +164,10 @@ namespace Tests.ContentValidation
             var globalEntitiesGameObject = GameObject.Find("GlobalEntities");
             Assert.NotNull(globalEntitiesGameObject, "No 'GlobalEntities' GameObject found");
         }
+        
+        // TODO check for door
+        
+        // TODO check for pause menu
 
         // Provides experiment names and scene paths to the test fixture
         private class PcScenesProvider : IEnumerable
