@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 /*
  * Inspired by https://forum.unity.com/threads/play-mode-tests-scenehandling.751049/
@@ -18,29 +19,18 @@ using UnityEngine.UI;
 
 namespace Tests.PlayModeTests
 {
-    public class MainMenuNavigationTests
+    public class MainMenuPcNavigationTests
     {
-        private Scene _initTestScene;
-        
+        private const string MainMenuScenePath = "Assets/Maroon/scenes/special/MainMenu.pc.unity";
+
         [UnitySetUp]
         public IEnumerator Setup()
         {
-            // Store scene in field to keep a reference for cleanup
-            _initTestScene = SceneManager.GetActiveScene();
+            // Start from Main Menu for every following test
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(MainMenuScenePath, new LoadSceneParameters(LoadSceneMode.Single));
             
-            // Load the initial scene for each test
-            // TODO Ask Michael if bootstrapping or main menu is the default initial scene
-            yield return EditorSceneManager
-                .LoadSceneAsyncInPlayMode(
-                    "Assets/Maroon/scenes/special/Bootstrapping.pc.unity",
-                    new LoadSceneParameters(LoadSceneMode.Single));
-        }
-
-        [UnityTest]
-        public IEnumerator BootStrappingToMainMenuTest()
-        {
             var currentSceneName = SceneManager.GetActiveScene().name;
-            Assert.AreEqual("MainMenu.pc", currentSceneName, "Bootstrapping scene did not load Main Menu scene");
+            Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
             yield return null;
         }
 
@@ -63,7 +53,49 @@ namespace Tests.PlayModeTests
             yield return null;
         }
         
-        private T GetComponentFromGameObjectWithName<T>(string gameObjectName)
+        // TODO cannot run tests in sequence through test runner :(
+        [UnityTest]
+        // [TestCaseSource(typeof(ExperimentMenuPaths))] // no return value possible?
+        // [TestCaseSource(nameof(_experimentMenuPaths))] // no return value possible?
+        [TestCase("Physics", "CoulombsLaw", "CoulombsLaw.pc", ExpectedResult = null)]
+        [TestCase("Physics", "FallingCoil", "FallingCoil.pc", ExpectedResult = null)]
+        [TestCase("Physics", "FaradaysLaw", "FaradaysLaw.pc", ExpectedResult = null)]
+        public IEnumerator LoadExperiment(string category, string experimentName, string sceneName)
+        {
+            Debug.Log($"Test case called with: {category} {experimentName} {sceneName}");
+            GetComponentFromGameObjectWithName<Button>("preMenuButtonLab").onClick.Invoke();
+            yield return null;
+            
+            GetButtonViaTextFromAllGameObjectsWithName(category, "preMenuButton(Clone)").onClick.Invoke();
+            yield return null;
+            
+            GetButtonViaTextFromAllGameObjectsWithName(experimentName, "preMenuButton(Clone)").onClick.Invoke();
+            yield return null;
+            
+            var currentSceneName = SceneManager.GetActiveScene().name;
+            Assert.AreEqual(sceneName, currentSceneName, $"Scene '{sceneName}' did not load");
+            // TODO cannot access initTestScene here anymore :/
+            // Debug.Log("XXXXXXXXXXXXXX " + _initTestScene.name);
+            // SceneManager.LoadScene(_initTestScene.name, LoadSceneMode.Single);
+            yield return null;
+        }
+        
+        private static object[] _experimentMenuPaths =
+        {
+            new object[] { "Physics", "CoulombsLaw", "CoulombsLaw.pc" },
+            new object[] { "Physics", "FallingCoil", "FallingCoil.pc" },
+            new object[] { "Physics", "FaradaysLaw", "FaradaysLaw.pc" }
+        };
+        
+        class ExperimentMenuPaths : IEnumerable
+        {
+            public IEnumerator GetEnumerator()
+            {
+                yield return new object[] { "Physics", "CoulombsLaw", "CoulombsLaw.pc", null };
+            }
+        }
+        
+        private static T GetComponentFromGameObjectWithName<T>(string gameObjectName)
         {
             var gameObject = GameObject.Find(gameObjectName);
             Assert.NotNull(gameObject, $"Could not find '{gameObjectName}' GameObject");
@@ -74,7 +106,7 @@ namespace Tests.PlayModeTests
             return component;
         }
         
-        private Button GetButtonViaTextFromAllGameObjectsWithName(string buttonText, string gameObjectName)
+        private static Button GetButtonViaTextFromAllGameObjectsWithName(string buttonText, string gameObjectName)
         {
             var buttonList = new List<Button>();
 
