@@ -53,19 +53,39 @@ namespace Tests.PlayModeTests
             yield return null;
         }
         
-        // TODO cannot run tests in sequence through test runner :(
+        
+        /*
+         * TODO
+         * Apparently TestCase is not supposed to work for UnityTest? Give ValueSource another try.
+         * Or maybe write my own attribute for parameterized test with return value?
+         * 
+         * Quote from https://docs.unity3d.com/Packages/com.unity.test-framework@1.0/manual/reference-tests-parameterized.html
+         * 
+         * For data-driven testing, you may want to have your tests parameterized. You may use both the NUnit attributes TestCase and ValueSource with a unit test.
+         * Note: With UnityTest it is recommended to use ValueSource since TestCase is not supported.
+         *
+         * TODO retrieve Menu Button Texts from LanguageManager
+         * Find GameObject -> Get Component ->
+         * LanguageManager.Instance.SetLanguage(languageKey)
+         * LanguageManager.Instance.GetString(text)
+         * 
+         */
+        
         [UnityTest]
         // [TestCaseSource(typeof(ExperimentMenuPaths))] // no return value possible?
         // [TestCaseSource(nameof(_experimentMenuPaths))] // no return value possible?
         [TestCase("Physics", "CoulombsLaw", "CoulombsLaw.pc", ExpectedResult = null)]
         [TestCase("Physics", "FallingCoil", "FallingCoil.pc", ExpectedResult = null)]
         [TestCase("Physics", "FaradaysLaw", "FaradaysLaw.pc", ExpectedResult = null)]
+        [TestCase("Physics", "HuygensPrinciple", "FaradaysLaw.pc", ExpectedResult = null)]
         public IEnumerator LoadExperiment(string category, string experimentName, string sceneName)
         {
             Debug.Log($"Test case called with: {category} {experimentName} {sceneName}");
+            // TODO use same method as below for buttons and search by button text instead of object name!
             GetComponentFromGameObjectWithName<Button>("preMenuButtonLab").onClick.Invoke();
             yield return null;
             
+            // TODO remove gameObjectName parameter, not really necessary :)
             GetButtonViaTextFromAllGameObjectsWithName(category, "preMenuButton(Clone)").onClick.Invoke();
             yield return null;
             
@@ -74,9 +94,7 @@ namespace Tests.PlayModeTests
             
             var currentSceneName = SceneManager.GetActiveScene().name;
             Assert.AreEqual(sceneName, currentSceneName, $"Scene '{sceneName}' did not load");
-            // TODO cannot access initTestScene here anymore :/
-            // Debug.Log("XXXXXXXXXXXXXX " + _initTestScene.name);
-            // SceneManager.LoadScene(_initTestScene.name, LoadSceneMode.Single);
+            
             yield return null;
         }
         
