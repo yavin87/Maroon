@@ -71,6 +71,7 @@ namespace Tests.PlayModeTests
 
         public static readonly TopLevelMenuPathSource[] TopLevelMenuPaths =
         {
+            new TopLevelMenuPathSource("Menu Lab", "preMenuColumnLaboratorySelection(Clone)"),
             new TopLevelMenuPathSource("Menu Audio", "preMenuColumnAudio(Clone)"),
             new TopLevelMenuPathSource("Menu Language", "preMenuColumnLanguage(Clone)"),
             new TopLevelMenuPathSource("Menu Credits", "preMenuColumnCredits(Clone)")
