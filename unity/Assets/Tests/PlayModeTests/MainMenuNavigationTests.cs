@@ -74,12 +74,16 @@ namespace Tests.PlayModeTests
         [UnityTest]
         // [TestCaseSource(typeof(ExperimentMenuPaths))] // no return value possible?
         // [TestCaseSource(nameof(_experimentMenuPaths))] // no return value possible?
-        [TestCase("Physics", "CoulombsLaw", "CoulombsLaw.pc", ExpectedResult = null)]
-        [TestCase("Physics", "FallingCoil", "FallingCoil.pc", ExpectedResult = null)]
-        [TestCase("Physics", "FaradaysLaw", "FaradaysLaw.pc", ExpectedResult = null)]
-        [TestCase("Physics", "HuygensPrinciple", "FaradaysLaw.pc", ExpectedResult = null)]
-        public IEnumerator LoadExperiment(string category, string experimentName, string sceneName)
+        // [TestCase("Physics", "CoulombsLaw", "CoulombsLaw.pc", ExpectedResult = null)]
+        // [TestCase("Physics", "FallingCoil", "FallingCoil.pc", ExpectedResult = null)]
+        // [TestCase("Physics", "FaradaysLaw", "FaradaysLaw.pc", ExpectedResult = null)]
+        // [TestCase("Physics", "HuygensPrinciple", "FaradaysLaw.pc", ExpectedResult = null)]
+        public IEnumerator LoadExperiment([ValueSource(nameof(Sources))] MySourceStruct source)
         {
+            string category = source.A;
+            string experimentName = source.B;
+            string sceneName = source.C;
+            
             Debug.Log($"Test case called with: {category} {experimentName} {sceneName}");
             // TODO use same method as below for buttons and search by button text instead of object name!
             GetComponentFromGameObjectWithName<Button>("preMenuButtonLab").onClick.Invoke();
@@ -97,7 +101,29 @@ namespace Tests.PlayModeTests
             
             yield return null;
         }
-        
+
+        public static readonly MySourceStruct[] Sources =
+        {
+            new MySourceStruct("Physics", "CoulombsLaw", "CoulombsLaw.pc"),
+            new MySourceStruct("Physics", "FallingCoil", "FallingCoil.pc"),
+            new MySourceStruct("Physics", "FaradaysLaw", "FaradaysLaw.pc")
+        };
+
+        public struct MySourceStruct
+        {
+            public MySourceStruct(string a, string b, string c)
+            {
+                A = a;
+                B = b;
+                C = c;
+            }
+
+            public string A { get; }
+            public string B { get; } 
+            public string C { get; }
+
+            public override string ToString() => $"{A}, {B}, {C}";
+        }
         private static object[] _experimentMenuPaths =
         {
             new object[] { "Physics", "CoulombsLaw", "CoulombsLaw.pc" },
