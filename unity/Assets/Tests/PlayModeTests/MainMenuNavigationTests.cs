@@ -31,25 +31,25 @@ namespace Tests.PlayModeTests
             Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
         }
         
-        public static readonly ValueSourceStruct[] LaboratoryMenuPaths =
+        public static readonly LabMenuPathSource[] LaboratoryMenuPaths =
         {
-            new ValueSourceStruct("Physics", "CoulombsLaw"),
-            new ValueSourceStruct("Physics", "FallingCoil"),
-            new ValueSourceStruct("Physics", "FaradaysLaw"),
-            new ValueSourceStruct("Physics", "HuygensPrinciple"),
-            new ValueSourceStruct("Physics", "PointWaveExperiment"),
-            new ValueSourceStruct("Physics", "Pendulum"),
-            new ValueSourceStruct("Physics", "VandeGraaffBalloon"),
-            new ValueSourceStruct("Physics", "VandeGraaffGenerator"),
-            new ValueSourceStruct("Physics", "Optics"),
-            new ValueSourceStruct("Physics", "3DMotionSimulation"),
-            new ValueSourceStruct("Physics", "Whiteboard"),
-            new ValueSourceStruct("Chemistry", "TitrationExperiment"),
-            new ValueSourceStruct("Computer Science", "Sorting")
+            new LabMenuPathSource("Physics", "CoulombsLaw"),
+            new LabMenuPathSource("Physics", "FallingCoil"),
+            new LabMenuPathSource("Physics", "FaradaysLaw"),
+            new LabMenuPathSource("Physics", "HuygensPrinciple"),
+            new LabMenuPathSource("Physics", "PointWaveExperiment"),
+            new LabMenuPathSource("Physics", "Pendulum"),
+            new LabMenuPathSource("Physics", "VandeGraaffBalloon"),
+            new LabMenuPathSource("Physics", "VandeGraaffGenerator"),
+            new LabMenuPathSource("Physics", "Optics"),
+            new LabMenuPathSource("Physics", "3DMotionSimulation"),
+            new LabMenuPathSource("Physics", "Whiteboard"),
+            new LabMenuPathSource("Chemistry", "TitrationExperiment"),
+            new LabMenuPathSource("Computer Science", "Sorting")
         };
         
         [UnityTest]
-        public IEnumerator LoadExperiment([ValueSource(nameof(LaboratoryMenuPaths))] ValueSourceStruct source)
+        public IEnumerator WhenClickLabCategoryExperimentThenLoadScene([ValueSource(nameof(LaboratoryMenuPaths))] LabMenuPathSource source)
         {
             string labsButtonLabel = GetTranslatedString("Menu Lab");
             string categoryButtonLabel = source.Category;
@@ -69,9 +69,29 @@ namespace Tests.PlayModeTests
             Assert.AreEqual(sceneName, currentSceneName, $"Scene '{sceneName}' did not load");
         }
 
-        public readonly struct ValueSourceStruct
+        public static readonly TopLevelMenuPathSource[] TopLevelMenuPaths =
         {
-            public ValueSourceStruct(string category, string experiment)
+            new TopLevelMenuPathSource("Menu Audio", "preMenuColumnAudio(Clone)"),
+            new TopLevelMenuPathSource("Menu Language", "preMenuColumnLanguage(Clone)"),
+            new TopLevelMenuPathSource("Menu Credits", "preMenuColumnCredits(Clone)")
+        };
+        
+        [UnityTest]
+        public IEnumerator WhenClickTopLevelMenuItemThenOpenIt([ValueSource(nameof(TopLevelMenuPaths))]TopLevelMenuPathSource source)
+        {
+            string buttonLabel = GetTranslatedString(source.LabelToTranslate);
+            string expectedMenuColumn = source.ExpectedMenuColumn;
+            
+            GetButtonViaText(buttonLabel).onClick.Invoke();
+            yield return null;
+
+            var menuColumn = GameObject.Find(expectedMenuColumn);
+            Assert.NotNull(menuColumn, $"Could not find '{buttonLabel}' menu Gameobject '{expectedMenuColumn}'");
+        }
+        
+        public readonly struct LabMenuPathSource
+        {
+            public LabMenuPathSource(string category, string experiment)
             {
                 Category = category;
                 Experiment = experiment;
@@ -80,7 +100,21 @@ namespace Tests.PlayModeTests
             public string Category { get; }
             public string Experiment { get; }
 
-            public override string ToString() => $"Category: {Category}, Experiment: {Experiment}";
+            public override string ToString() => $"{Category} -> {Experiment}";
+        }
+        
+        public readonly struct TopLevelMenuPathSource
+        {
+            public TopLevelMenuPathSource(string labelToTranslateToTranslate, string expectedMenuColumn)
+            {
+                LabelToTranslate = labelToTranslateToTranslate;
+                ExpectedMenuColumn = expectedMenuColumn;
+            }
+
+            public string LabelToTranslate { get; }
+            public string ExpectedMenuColumn { get; }
+
+            public override string ToString() => $"{LabelToTranslate}";
         }
 
         // TODO can be removed, don't need general component from object func anymore
@@ -131,7 +165,7 @@ namespace Tests.PlayModeTests
             }
         }
 
-        private string GetTranslatedString(string text)
+        private static string GetTranslatedString(string text)
         {
             var translatedText = LanguageManager.Instance.GetString(text);
             Assert.AreNotEqual(text, translatedText, $"No translation found for {text}");
