@@ -31,114 +31,66 @@ namespace Tests.PlayModeTests
             
             var currentSceneName = SceneManager.GetActiveScene().name;
             Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
-            yield return null;
         }
-
-        [UnityTest]
-        public IEnumerator LoadExperimentFallingCoilTest()
-        {
-            GetComponentFromGameObjectWithName<Button>("preMenuButtonLab").onClick.Invoke();
-            yield return null;
-            
-            // TODO idea: do language specific checks as well! (LanguageManager)
-            GetButtonViaTextFromAllGameObjectsWithName("Physics", "preMenuButton(Clone)").onClick.Invoke();
-            yield return null;
-            
-            GetButtonViaTextFromAllGameObjectsWithName("FallingCoil", "preMenuButton(Clone)").onClick.Invoke();
-            yield return null;
-            
-            var currentSceneName = SceneManager.GetActiveScene().name;
-            Assert.AreEqual("FallingCoil.pc", currentSceneName, "Scene 'FallingCoil.pc' did not load");
-            
-            yield return null;
-        }
-        
         
         /*
-         * TODO
-         * Apparently TestCase is not supposed to work for UnityTest? Give ValueSource another try.
-         * Or maybe write my own attribute for parameterized test with return value?
-         * 
-         * Quote from https://docs.unity3d.com/Packages/com.unity.test-framework@1.0/manual/reference-tests-parameterized.html
-         * 
-         * For data-driven testing, you may want to have your tests parameterized. You may use both the NUnit attributes TestCase and ValueSource with a unit test.
-         * Note: With UnityTest it is recommended to use ValueSource since TestCase is not supported.
-         *
-         * TODO retrieve Menu Button Texts from LanguageManager
+         * TODO try to retrieve Menu Button Texts from LanguageManager
          * Find GameObject -> Get Component ->
          * LanguageManager.Instance.SetLanguage(languageKey)
          * LanguageManager.Instance.GetString(text)
-         * 
          */
         
-        [UnityTest]
-        // [TestCaseSource(typeof(ExperimentMenuPaths))] // no return value possible?
-        // [TestCaseSource(nameof(_experimentMenuPaths))] // no return value possible?
-        // [TestCase("Physics", "CoulombsLaw", "CoulombsLaw.pc", ExpectedResult = null)]
-        // [TestCase("Physics", "FallingCoil", "FallingCoil.pc", ExpectedResult = null)]
-        // [TestCase("Physics", "FaradaysLaw", "FaradaysLaw.pc", ExpectedResult = null)]
-        // [TestCase("Physics", "HuygensPrinciple", "FaradaysLaw.pc", ExpectedResult = null)]
-        public IEnumerator LoadExperiment([ValueSource(nameof(Sources))] MySourceStruct source)
+        public static readonly ValueSourceStruct[] LaboratoryMenuPaths =
         {
-            string category = source.A;
-            string experimentName = source.B;
-            string sceneName = source.C;
+            new ValueSourceStruct("Physics", "CoulombsLaw"),
+            new ValueSourceStruct("Physics", "FallingCoil"),
+            new ValueSourceStruct("Physics", "FaradaysLaw"),
+            new ValueSourceStruct("Physics", "HuygensPrinciple"),
+            new ValueSourceStruct("Physics", "PointWaveExperiment"),
+            new ValueSourceStruct("Physics", "Pendulum"),
+            new ValueSourceStruct("Physics", "VandeGraaffBalloon"),
+            new ValueSourceStruct("Physics", "VandeGraaffGenerator"),
+            new ValueSourceStruct("Physics", "Optics"),
+            new ValueSourceStruct("Physics", "3DMotionSimulation"),
+            new ValueSourceStruct("Physics", "Whiteboard"),
+            new ValueSourceStruct("Chemistry", "TitrationExperiment"),
+            new ValueSourceStruct("Computer Science", "Sorting")
+        };
+        
+        [UnityTest]
+        public IEnumerator LoadExperiment([ValueSource(nameof(LaboratoryMenuPaths))] ValueSourceStruct source)
+        {
+            string category = source.Category;
+            string experimentName = source.Experiment;
+            string sceneName = experimentName + ".pc";
             
-            Debug.Log($"Test case called with: {category} {experimentName} {sceneName}");
-            // TODO use same method as below for buttons and search by button text instead of object name!
-            GetComponentFromGameObjectWithName<Button>("preMenuButtonLab").onClick.Invoke();
+            GetButtonViaText("Enter Lab").onClick.Invoke();
             yield return null;
             
-            // TODO remove gameObjectName parameter, not really necessary :)
-            GetButtonViaTextFromAllGameObjectsWithName(category, "preMenuButton(Clone)").onClick.Invoke();
+            GetButtonViaText(category).onClick.Invoke();
             yield return null;
             
-            GetButtonViaTextFromAllGameObjectsWithName(experimentName, "preMenuButton(Clone)").onClick.Invoke();
+            GetButtonViaText(experimentName).onClick.Invoke();
             yield return null;
             
             var currentSceneName = SceneManager.GetActiveScene().name;
             Assert.AreEqual(sceneName, currentSceneName, $"Scene '{sceneName}' did not load");
-            
-            yield return null;
         }
 
-        public static readonly MySourceStruct[] Sources =
+        public readonly struct ValueSourceStruct
         {
-            new MySourceStruct("Physics", "CoulombsLaw", "CoulombsLaw.pc"),
-            new MySourceStruct("Physics", "FallingCoil", "FallingCoil.pc"),
-            new MySourceStruct("Physics", "FaradaysLaw", "FaradaysLaw.pc")
-        };
-
-        public struct MySourceStruct
-        {
-            public MySourceStruct(string a, string b, string c)
+            public ValueSourceStruct(string category, string experiment)
             {
-                A = a;
-                B = b;
-                C = c;
+                Category = category;
+                Experiment = experiment;
             }
 
-            public string A { get; }
-            public string B { get; } 
-            public string C { get; }
+            public string Category { get; }
+            public string Experiment { get; }
 
-            public override string ToString() => $"{A}, {B}, {C}";
+            public override string ToString() => $"Category: {Category}, Experiment: {Experiment}";
         }
-        private static object[] _experimentMenuPaths =
-        {
-            new object[] { "Physics", "CoulombsLaw", "CoulombsLaw.pc" },
-            new object[] { "Physics", "FallingCoil", "FallingCoil.pc" },
-            new object[] { "Physics", "FaradaysLaw", "FaradaysLaw.pc" }
-        };
-        
-        class ExperimentMenuPaths : IEnumerable
-        {
-            public IEnumerator GetEnumerator()
-            {
-                yield return new object[] { "Physics", "CoulombsLaw", "CoulombsLaw.pc", null };
-            }
-        }
-        
+
         private static T GetComponentFromGameObjectWithName<T>(string gameObjectName)
         {
             var gameObject = GameObject.Find(gameObjectName);
@@ -150,28 +102,30 @@ namespace Tests.PlayModeTests
             return component;
         }
         
-        private static Button GetButtonViaTextFromAllGameObjectsWithName(string buttonText, string gameObjectName)
+        private static Button GetButtonViaText(string buttonText)
         {
-            var buttonList = new List<Button>();
+            Button buttonToReturn = null;
 
-            var gameObjects = Resources.FindObjectsOfTypeAll<GameObject>()
-                                                .Where(obj => obj.name == gameObjectName);
+            var buttonGameObjects = Resources.FindObjectsOfTypeAll<GameObject>();
             
-            foreach (var gameObject in gameObjects)
+            foreach (var buttonGameObject in buttonGameObjects)
             {
-                var textObject = gameObject.GetComponentInChildren<TextMeshProUGUI>();
-                Assert.NotNull(textObject, $"Could not find a 'TextMeshProUGUI' component in GameObject '{gameObject.name}'");
+                var buttonComponent = buttonGameObject.GetComponent<Button>();
+                var textComponent = buttonGameObject.GetComponentInChildren<TextMeshProUGUI>();
                 
-                if (textObject.text == buttonText)
+                if (buttonComponent && textComponent && textComponent.text == buttonText)
                 {
-                    buttonList.Add(gameObject.GetComponent<Button>());
+                    if (buttonToReturn != null)
+                    {
+                        Assert.Fail($"Found more than one Button with Text '{buttonText}'");
+                    }
+                    buttonToReturn = buttonGameObject.GetComponent<Button>();
                 }
             }
             
-            Assert.True(buttonList.Count > 0, $"Could not find any Button with Text '{buttonText}'");
-            Assert.AreEqual(1, buttonList.Count, $"Found more than one Button with Text '{buttonText}'");
+            Assert.NotNull(buttonToReturn, $"Could not find any Button with Text '{buttonText}'");
             
-            return buttonList[0];
+            return buttonToReturn;
         }
         
         // TODO attribute can be removed. the test runner window still shows debug.log messages :(
