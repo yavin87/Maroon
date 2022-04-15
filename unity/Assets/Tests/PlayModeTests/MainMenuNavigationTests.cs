@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using GEAR.Localization;
 using NUnit.Framework;
 using TMPro;
 using UnityEditor.SceneManagement;
@@ -9,7 +8,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 /*
  * Inspired by https://forum.unity.com/threads/play-mode-tests-scenehandling.751049/
@@ -33,13 +31,6 @@ namespace Tests.PlayModeTests
             Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
         }
         
-        /*
-         * TODO try to retrieve Menu Button Texts from LanguageManager
-         * Find GameObject -> Get Component ->
-         * LanguageManager.Instance.SetLanguage(languageKey)
-         * LanguageManager.Instance.GetString(text)
-         */
-        
         public static readonly ValueSourceStruct[] LaboratoryMenuPaths =
         {
             new ValueSourceStruct("Physics", "CoulombsLaw"),
@@ -60,17 +51,18 @@ namespace Tests.PlayModeTests
         [UnityTest]
         public IEnumerator LoadExperiment([ValueSource(nameof(LaboratoryMenuPaths))] ValueSourceStruct source)
         {
-            string category = source.Category;
-            string experimentName = source.Experiment;
-            string sceneName = experimentName + ".pc";
-            
-            GetButtonViaText("Enter Lab").onClick.Invoke();
+            string labsButtonLabel = GetTranslatedString("Menu Lab");
+            string categoryButtonLabel = source.Category;
+            string experimentButtonLabel = source.Experiment;
+            string sceneName = experimentButtonLabel + ".pc";
+
+            GetButtonViaText(labsButtonLabel).onClick.Invoke();
             yield return null;
             
-            GetButtonViaText(category).onClick.Invoke();
+            GetButtonViaText(categoryButtonLabel).onClick.Invoke();
             yield return null;
             
-            GetButtonViaText(experimentName).onClick.Invoke();
+            GetButtonViaText(experimentButtonLabel).onClick.Invoke();
             yield return null;
             
             var currentSceneName = SceneManager.GetActiveScene().name;
@@ -91,6 +83,7 @@ namespace Tests.PlayModeTests
             public override string ToString() => $"Category: {Category}, Experiment: {Experiment}";
         }
 
+        // TODO can be removed, don't need general component from object func anymore
         private static T GetComponentFromGameObjectWithName<T>(string gameObjectName)
         {
             var gameObject = GameObject.Find(gameObjectName);
@@ -136,6 +129,14 @@ namespace Tests.PlayModeTests
             {
                 Debug.unityLogger.logEnabled = enabled;
             }
+        }
+
+        private string GetTranslatedString(string text)
+        {
+            var translatedText = LanguageManager.Instance.GetString(text);
+            Assert.AreNotEqual(text, translatedText, $"No translation found for {text}");
+
+            return translatedText;
         }
     }
 }
