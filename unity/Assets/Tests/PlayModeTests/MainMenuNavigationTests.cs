@@ -118,18 +118,6 @@ namespace Tests.PlayModeTests
             public override string ToString() => $"{LabelToTranslate}";
         }
 
-        // TODO can be removed, don't need general component from object func anymore
-        private static T GetComponentFromGameObjectWithName<T>(string gameObjectName)
-        {
-            var gameObject = GameObject.Find(gameObjectName);
-            Assert.NotNull(gameObject, $"Could not find '{gameObjectName}' GameObject");
-            
-            var component = gameObject.GetComponent<T>();
-            Assert.NotNull(component, $"Could not find '{typeof(T).Name}' component in GameObject '{gameObject.name}'");
-
-            return component;
-        }
-        
         private static Button GetButtonViaText(string buttonText)
         {
             Button buttonToReturn = null;
@@ -156,16 +144,6 @@ namespace Tests.PlayModeTests
             return buttonToReturn;
         }
         
-        // TODO attribute can be removed. the test runner window still shows debug.log messages :(
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-        public class DebugLoggerSwitch : Attribute
-        {
-            public DebugLoggerSwitch(bool enabled)
-            {
-                Debug.unityLogger.logEnabled = enabled;
-            }
-        }
-
         private static string GetTranslatedString(string text)
         {
             var translatedText = LanguageManager.Instance.GetString(text);

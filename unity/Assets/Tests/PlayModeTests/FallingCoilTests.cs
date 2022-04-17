@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace Tests.EndToEnd
+namespace Tests.PlayModeTests
 {
     public class FallingCoilTests
     {
@@ -22,6 +22,10 @@ namespace Tests.EndToEnd
         [UnityTest]
         public IEnumerator Test1()
         {
+            // TODO test idea
+            // onClick.invoke GUI buttons to produce change
+            // check for change after skipping a frame
+            // try out many different scenarios :)
             var a = GameObject.Find("a");
             Debug.Assert(a != null);
             Object.Destroy(a);
