@@ -97,11 +97,21 @@ namespace Tests.PlayModeTests
                 Assert.AreEqual(preLanguageChangeButtons[buttonLabel], postLanguageChangeButtons[buttonLabel])
             );
 
+            /*
+             * TODO
+             * split language tests up:
+             * one test for languagemanager setting changed
+             * one test for each toplevel button and its related submenu (maybe include main menu banner)
+             */
         }
 
         [UnityTest]
-        public IEnumerator Bla()
+        public IEnumerator WhenChangeSoundFxAudioSliderValueThenSoundFxAudioSourceVolumeChanges()
         {
+            /**
+             * TODO
+             * bug encountered, test won't work
+             */
             float oldVolumeValue = 0f;
             float newVolumeValue = 1f;
             
@@ -122,7 +132,7 @@ namespace Tests.PlayModeTests
             Assert.AreEqual(newVolumeValue, audioSourceFx.volume);
         }
         
-        // TODO Test idea:
+        // TODO Test "selected button" idea:
         // draft: check if select icon activates on button click (small square with arrow inside)
         // 1. preliminary check that no button has the icon active
         // 2. then check clicked button if icon is active
