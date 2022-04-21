@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using GEAR.Localization;
 using NUnit.Framework;
 using TMPro;
@@ -17,9 +19,10 @@ using UnityEngine.UI;
 
 namespace Tests.PlayModeTests
 {
-    public class MainMenuPcNavigationTests
+    public class MainMenuPcNavigationTests // TODO change name to MainMenuPcTests (didnt do it on laptop, recompiling takes forever)
     {
         private const string MainMenuScenePath = "Assets/Maroon/scenes/special/MainMenu.pc.unity";
+        private const SystemLanguage DefaultLanguage = SystemLanguage.English;
 
         [UnitySetUp]
         public IEnumerator Setup()
@@ -29,7 +32,100 @@ namespace Tests.PlayModeTests
             
             var currentSceneName = SceneManager.GetActiveScene().name;
             Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
+            
+            Assert.AreEqual(DefaultLanguage, LanguageManager.Instance.CurrentLanguage,
+                $"Default language is not set to '{DefaultLanguage.ToString()}'");
         }
+        
+        public static readonly TopLevelMenuPathSource[] TopLevelMenuPaths =
+        {
+            new TopLevelMenuPathSource("Menu Lab", "preMenuColumnLaboratorySelection(Clone)"),
+            new TopLevelMenuPathSource("Menu Audio", "preMenuColumnAudio(Clone)"),
+            new TopLevelMenuPathSource("Menu Language", "preMenuColumnLanguage(Clone)"),
+            new TopLevelMenuPathSource("Menu Credits", "preMenuColumnCredits(Clone)")
+        };
+        
+        [UnityTest]
+        public IEnumerator WhenClickTopLevelMenuItemThenOpenIt([ValueSource(nameof(TopLevelMenuPaths))]TopLevelMenuPathSource source)
+        {
+            string buttonLabel = LanguageManager.Instance.GetString(source.LabelToTranslate);
+            string expectedMenuColumn = source.ExpectedMenuColumn;
+            
+            GetButtonViaText(buttonLabel).onClick.Invoke();
+            yield return null;
+
+            var menuColumn = GameObject.Find(expectedMenuColumn);
+            Assert.NotNull(menuColumn, $"Could not find '{buttonLabel}' menu Gameobject '{expectedMenuColumn}'");
+        }
+
+        [UnityTest]
+        public IEnumerator WhenSelectGermanLanguageInMenuThenLanguageManagerSettingAndMenuLabelsChanged()
+        {
+            string[] topLevelButtonLabels = { "Menu Lab", "Menu Audio", "Menu Language", "Menu Credits", "Menu Exit" };
+            
+            // Find and store top level main menu buttons by their English label
+            var preLanguageChangeButtons = topLevelButtonLabels.ToDictionary(
+                buttonLabel => buttonLabel,
+                buttonLabel => GetButtonViaText(LanguageManager.Instance.GetString(buttonLabel, DefaultLanguage))
+            );
+
+            // Find and click Language button
+            string languageButtonLabel = LanguageManager.Instance.GetString("Menu Language", DefaultLanguage);
+            GetButtonViaText(languageButtonLabel).onClick.Invoke();
+            yield return null;
+            
+            // Find and click German button
+            string germanButtonLabel = LanguageManager.Instance.GetString("German", DefaultLanguage);
+            GetButtonViaText(germanButtonLabel).onClick.Invoke();
+            yield return null;
+
+            // Check if LanguageManager's language property changed
+            var expectedLanguage = SystemLanguage.German;
+            var actualLanguage = LanguageManager.Instance.CurrentLanguage;
+            
+            Assert.AreEqual(expectedLanguage, actualLanguage,
+                "LanguageManager's 'CurrentLanguage' property has not changed");
+            
+            // Find and store top level main menu buttons by their German label
+            var postLanguageChangeButtons = topLevelButtonLabels.ToDictionary(
+                buttonLabel => buttonLabel,
+                buttonLabel => GetButtonViaText(LanguageManager.Instance.GetString(buttonLabel, expectedLanguage))
+            );
+
+            // Compare buttons whether their labels have changed correctly
+            topLevelButtonLabels.ToList().ForEach(buttonLabel =>
+                Assert.AreEqual(preLanguageChangeButtons[buttonLabel], postLanguageChangeButtons[buttonLabel])
+            );
+
+        }
+
+        [UnityTest]
+        public IEnumerator Bla()
+        {
+            float oldVolumeValue = 0f;
+            float newVolumeValue = 1f;
+            
+            // Make sure audio setting 'Sound FX' is set to 0 (off)
+            var audioSourceFx = GetComponentInChildrenFromGameObjectWithName<AudioSource>("SoundEffectSource");
+            Assert.AreEqual(oldVolumeValue, audioSourceFx.volume);
+            
+            // Click Audio button to open audio menu
+            string mainMenuAudioButtonLabel = LanguageManager.Instance.GetString("Menu Audio");
+            GetButtonViaText(mainMenuAudioButtonLabel).onClick.Invoke();
+            yield return null;
+            
+            var slider = GetComponentInChildrenFromGameObjectWithName<Slider>("preMenuButtonSliderFx");
+            // change value of slider
+            slider.value = newVolumeValue;
+            yield return null;
+            
+            Assert.AreEqual(newVolumeValue, audioSourceFx.volume);
+        }
+        
+        // TODO Test idea:
+        // draft: check if select icon activates on button click (small square with arrow inside)
+        // 1. preliminary check that no button has the icon active
+        // 2. then check clicked button if icon is active
         
         public static readonly LabMenuPathSource[] LaboratoryMenuPaths =
         {
@@ -51,7 +147,7 @@ namespace Tests.PlayModeTests
         [UnityTest]
         public IEnumerator WhenClickLabCategoryExperimentThenLoadScene([ValueSource(nameof(LaboratoryMenuPaths))] LabMenuPathSource source)
         {
-            string labsButtonLabel = GetTranslatedString("Menu Lab");
+            string labsButtonLabel = LanguageManager.Instance.GetString("Menu Lab");
             string categoryButtonLabel = source.Category;
             string experimentButtonLabel = source.Experiment;
             string sceneName = experimentButtonLabel + ".pc";
@@ -69,26 +165,6 @@ namespace Tests.PlayModeTests
             Assert.AreEqual(sceneName, currentSceneName, $"Scene '{sceneName}' did not load");
         }
 
-        public static readonly TopLevelMenuPathSource[] TopLevelMenuPaths =
-        {
-            new TopLevelMenuPathSource("Menu Lab", "preMenuColumnLaboratorySelection(Clone)"),
-            new TopLevelMenuPathSource("Menu Audio", "preMenuColumnAudio(Clone)"),
-            new TopLevelMenuPathSource("Menu Language", "preMenuColumnLanguage(Clone)"),
-            new TopLevelMenuPathSource("Menu Credits", "preMenuColumnCredits(Clone)")
-        };
-        
-        [UnityTest]
-        public IEnumerator WhenClickTopLevelMenuItemThenOpenIt([ValueSource(nameof(TopLevelMenuPaths))]TopLevelMenuPathSource source)
-        {
-            string buttonLabel = GetTranslatedString(source.LabelToTranslate);
-            string expectedMenuColumn = source.ExpectedMenuColumn;
-            
-            GetButtonViaText(buttonLabel).onClick.Invoke();
-            yield return null;
-
-            var menuColumn = GameObject.Find(expectedMenuColumn);
-            Assert.NotNull(menuColumn, $"Could not find '{buttonLabel}' menu Gameobject '{expectedMenuColumn}'");
-        }
         
         public readonly struct LabMenuPathSource
         {
@@ -144,12 +220,15 @@ namespace Tests.PlayModeTests
             return buttonToReturn;
         }
         
-        private static string GetTranslatedString(string text)
+        private static T GetComponentInChildrenFromGameObjectWithName<T>(string gameObjectName)
         {
-            var translatedText = LanguageManager.Instance.GetString(text);
-            Assert.AreNotEqual(text, translatedText, $"No translation found for {text}");
+            var gameObject = GameObject.Find(gameObjectName);
+            Assert.NotNull(gameObject, $"Could not find '{gameObjectName}' GameObject");
 
-            return translatedText;
+            var component = gameObject.GetComponentInChildren<T>();
+            Assert.NotNull(component, $"Could not find '{typeof(T).Name}' component in GameObject '{gameObject.name}'");
+
+            return component;
         }
     }
 }
