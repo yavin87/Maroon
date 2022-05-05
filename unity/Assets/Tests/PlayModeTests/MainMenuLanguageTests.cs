@@ -6,6 +6,11 @@ using UnityEngine.TestTools;
 
 namespace Tests
 {
+    /*
+     * Check if its possible to generalize language tests, e.g. get available languages from LM
+     * then compare new language objects to objects found with default language
+     * for main menu and each submenu
+     */
     public class MainMenuLanguageTests
     {
         // A Test behaves as an ordinary method
