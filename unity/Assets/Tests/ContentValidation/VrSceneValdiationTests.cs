@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Tests.Utils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -88,26 +89,6 @@ namespace Tests.ContentValidation
         {
             var globalEntitiesGameObject = GameObject.Find("GlobalEntities"); 
             Assert.NotNull(globalEntitiesGameObject, "No 'GlobalEntities' GameObject found");
-        }
-        
-        // Provides experiment names and scene paths to the test fixture
-        private class VrScenesProvider : IEnumerable
-        {
-            private readonly Regex _experimentNameRegex = new Regex(@"\w+\.vr");
-        
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                foreach (var scene in EditorBuildSettings.scenes)
-                {
-                    // Only return VR scenes from the experiments folder that are enabled in build settings
-                    if (scene.enabled && scene.path != null && scene.path.Contains("experiments") && scene.path.EndsWith(".vr.unity"))
-                    {
-                        // Return the experiment name extracted from its path - this defines test fixture name
-                        var experimentName = _experimentNameRegex.Match(scene.path).ToString();
-                        yield return new object[] { experimentName, scene.path };
-                    }
-                }
-            }
         }
     }
 }

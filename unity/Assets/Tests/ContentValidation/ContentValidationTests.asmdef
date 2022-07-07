@@ -3,7 +3,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "GEAR.LanguageManager"
+        "GEAR.LanguageManager",
+        "TestUtils"
     ],
     "includePlatforms": [
         "Editor"

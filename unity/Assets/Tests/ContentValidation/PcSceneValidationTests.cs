@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using GEAR.Localization;
 using NUnit.Framework;
+using Tests.Utils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UI;
@@ -170,26 +171,6 @@ namespace Tests.ContentValidation
         {
             var pauseMenuGameObject = GameObject.Find("prePauseMenu") ?? GameObject.Find("PauseMenu");
             Assert.NotNull(pauseMenuGameObject, "No 'prePauseMenu' or 'PauseMenu' GameObject found");
-        }
-
-        // Provides experiment names and scene paths to the test fixture
-        private class PcScenesProvider : IEnumerable
-        {
-            readonly Regex _experimentNameRegex = new Regex(@"\w+\.pc");
-        
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                foreach (var scene in EditorBuildSettings.scenes)
-                {
-                    // Only return PC scenes from the experiments folder that are enabled in build settings
-                    if (scene.enabled && scene.path != null && scene.path.Contains("experiments") && scene.path.EndsWith(".pc.unity"))
-                    {
-                        // Return the experiment name extracted from its path - this defines test fixture name
-                        var experimentName = _experimentNameRegex.Match(scene.path).ToString();
-                        yield return new object[] { experimentName, scene.path };
-                    }
-                }
-            }
         }
     }
 }
