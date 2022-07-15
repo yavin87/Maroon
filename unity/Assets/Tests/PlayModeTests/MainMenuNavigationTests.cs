@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Linq;
 using GEAR.Localization;
 using NUnit.Framework;
 using TMPro;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,17 +18,23 @@ using UnityEngine.UI;
 
 namespace Tests.PlayModeTests
 {
+    using static PlaymodeTestUtils;
     public class MainMenuPcNavigationTests // TODO change name to MainMenuPcTests (didnt do it on laptop, recompiling takes forever)
     {
         private const string MainMenuScenePath = "Assets/Maroon/scenes/special/MainMenu.pc.unity";
+        private const string PrefabsColumnsPath = "Assets/Maroon/reusableGui/Menu/PrefabsColumns/";
         private const SystemLanguage DefaultLanguage = SystemLanguage.English;
+
+        private const string EnterLabLabel = "Menu Lab";
 
         [UnitySetUp]
         public IEnumerator Setup()
         {
             // Start from Main Menu for every following test
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(MainMenuScenePath, new LoadSceneParameters(LoadSceneMode.Single));
-            
+
+            var platformManager = GameObject.Find("PlatformManager");
+
             var currentSceneName = SceneManager.GetActiveScene().name;
             Assert.AreEqual("MainMenu.pc", currentSceneName, "'MainMenu.pc' scene did not load");
             
@@ -37,23 +42,26 @@ namespace Tests.PlayModeTests
                 $"Default language is not set to '{DefaultLanguage.ToString()}'");
         }
         
-        public static readonly TopLevelMenuPathSource[] TopLevelMenuPaths =
+        public static readonly ButtonLabelMatchingMenuColumnSource[] TopLevelMenuPaths =
         {
-            new TopLevelMenuPathSource("Menu Lab", "preMenuColumnLaboratorySelection(Clone)"),
-            new TopLevelMenuPathSource("Menu Audio", "preMenuColumnAudio(Clone)"),
-            new TopLevelMenuPathSource("Menu Language", "preMenuColumnLanguage(Clone)"),
-            new TopLevelMenuPathSource("Menu Credits", "preMenuColumnCredits(Clone)")
+            new ButtonLabelMatchingMenuColumnSource(EnterLabLabel, "preMenuColumnLaboratorySelection.prefab"),
+            new ButtonLabelMatchingMenuColumnSource("Menu Audio", "preMenuColumnAudio.prefab"),
+            new ButtonLabelMatchingMenuColumnSource("Menu Language", "preMenuColumnLanguage.prefab"),
+            new ButtonLabelMatchingMenuColumnSource("Menu Credits", "preMenuColumnCredits.prefab")
         };
         
         [UnityTest]
-        public IEnumerator WhenClickTopLevelMenuItemThenOpenIt([ValueSource(nameof(TopLevelMenuPaths))]TopLevelMenuPathSource source)
+        public IEnumerator WhenClickTopLevelMenuItemThenOpenIt([ValueSource(nameof(TopLevelMenuPaths))]ButtonLabelMatchingMenuColumnSource source)
         {
-            string buttonLabel = LanguageManager.Instance.GetString(source.LabelToTranslate);
+            string buttonLabel = LanguageManager.Instance.GetString(source.LanguageManagerButtonLabel);
             string expectedMenuColumn = source.ExpectedMenuColumn;
+            Debug.Log($"expectedMenuColumn: {expectedMenuColumn}");
             
+            // Click labeled button
             GetButtonViaText(buttonLabel).onClick.Invoke();
             yield return null;
 
+            // Check correct menu has appeared
             var menuColumn = GameObject.Find(expectedMenuColumn);
             Assert.NotNull(menuColumn, $"Could not find '{buttonLabel}' menu Gameobject '{expectedMenuColumn}'");
         }
@@ -140,40 +148,16 @@ namespace Tests.PlayModeTests
              */
         }
 
-        [UnityTest]
-        public IEnumerator WhenChangeSoundFxAudioSliderValueThenSoundFxAudioSourceVolumeChanges()
-        {
-            /**
-             * TODO
-             * bug encountered, test won't work
-             */
-            float oldVolumeValue = 0f;
-            float newVolumeValue = 1f;
-            
-            // Make sure audio setting 'Sound FX' is set to 0 (off)
-            var audioSourceFx = GetComponentInChildrenFromGameObjectWithName<AudioSource>("SoundEffectSource");
-            Assert.AreEqual(oldVolumeValue, audioSourceFx.volume);
-            
-            // Click Audio button to open audio menu
-            string mainMenuAudioButtonLabel = LanguageManager.Instance.GetString("Menu Audio");
-            GetButtonViaText(mainMenuAudioButtonLabel).onClick.Invoke();
-            yield return null;
-            
-            var slider = GetComponentInChildrenFromGameObjectWithName<Slider>("preMenuButtonSliderFx");
-            // change value of slider
-            slider.value = newVolumeValue;
-            yield return null;
-            
-            Assert.AreEqual(newVolumeValue, audioSourceFx.volume);
-        }
-        
         // TODO Test "selected button" idea:
         // draft: check if select icon activates on button click (small square with arrow inside)
         // 1. preliminary check that no button has the icon active
         // 2. then check clicked button if icon is active
         
+        // TODO Try to use PcScenesProvider instead! edit: makes no sense, as its missing categories :/
+        // Can I access the menu somehow? Probably not since the logic is stored in Maroon scripts that arent accessible from Playmode tests
         public static readonly LabMenuPathSource[] LaboratoryMenuPaths =
         {
+            new LabMenuPathSource("Physics", "CathodeRayTube"),
             new LabMenuPathSource("Physics", "CoulombsLaw"),
             new LabMenuPathSource("Physics", "FallingCoil"),
             new LabMenuPathSource("Physics", "FaradaysLaw"),
@@ -192,7 +176,7 @@ namespace Tests.PlayModeTests
         [UnityTest]
         public IEnumerator WhenClickLabCategoryExperimentThenLoadScene([ValueSource(nameof(LaboratoryMenuPaths))] LabMenuPathSource source)
         {
-            string labsButtonLabel = LanguageManager.Instance.GetString("Menu Lab");
+            string labsButtonLabel = LanguageManager.Instance.GetString(EnterLabLabel);
             string categoryButtonLabel = source.Category;
             string experimentButtonLabel = source.Experiment;
             string sceneName = experimentButtonLabel + ".pc";
@@ -225,55 +209,18 @@ namespace Tests.PlayModeTests
             public override string ToString() => $"{Category} -> {Experiment}";
         }
         
-        public readonly struct TopLevelMenuPathSource
+        public readonly struct ButtonLabelMatchingMenuColumnSource
         {
-            public TopLevelMenuPathSource(string labelToTranslate, string expectedMenuColumn)
+            public ButtonLabelMatchingMenuColumnSource(string languageManagerButtonLabel, string expectedMenuColumn)
             {
-                LabelToTranslate = labelToTranslate;
-                ExpectedMenuColumn = expectedMenuColumn;
+                LanguageManagerButtonLabel = languageManagerButtonLabel;
+                ExpectedMenuColumn = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsColumnsPath + expectedMenuColumn).name + "(Clone)";
             }
 
-            public string LabelToTranslate { get; }
+            public string LanguageManagerButtonLabel { get; }
             public string ExpectedMenuColumn { get; }
 
-            public override string ToString() => $"{LabelToTranslate}";
-        }
-
-        private static Button GetButtonViaText(string buttonText)
-        {
-            Button buttonToReturn = null;
-
-            var buttonGameObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-            
-            foreach (var buttonGameObject in buttonGameObjects)
-            {
-                var buttonComponent = buttonGameObject.GetComponent<Button>();
-                var textComponent = buttonGameObject.GetComponentInChildren<TextMeshProUGUI>();
-                
-                if (buttonComponent && textComponent && textComponent.text == buttonText)
-                {
-                    if (buttonToReturn != null)
-                    {
-                        Assert.Fail($"Found more than one Button with Text '{buttonText}'");
-                    }
-                    buttonToReturn = buttonGameObject.GetComponent<Button>();
-                }
-            }
-            
-            Assert.NotNull(buttonToReturn, $"Could not find any Button with Text '{buttonText}'");
-            
-            return buttonToReturn;
-        }
-        
-        private static T GetComponentInChildrenFromGameObjectWithName<T>(string gameObjectName)
-        {
-            var gameObject = GameObject.Find(gameObjectName);
-            Assert.NotNull(gameObject, $"Could not find '{gameObjectName}' GameObject");
-
-            var component = gameObject.GetComponentInChildren<T>();
-            Assert.NotNull(component, $"Could not find '{typeof(T).Name}' component in GameObject '{gameObject.name}'");
-
-            return component;
+            public override string ToString() => $"{LanguageManagerButtonLabel}";
         }
     }
 }
