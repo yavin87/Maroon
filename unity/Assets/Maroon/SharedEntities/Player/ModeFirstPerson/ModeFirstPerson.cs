@@ -113,7 +113,8 @@ public class ModeFirstPerson : MonoBehaviour
 
     void Start()
     {
-        // fetch components on the same gameObject
+        audioSource = GameObject.Find("SoundEffectSource").GetComponent<AudioSource>();
+            // fetch components on the same gameObject
         m_Controller = GetComponent<CharacterController>();
 
         m_InputHandler = GetComponent<ModeFirstPersonInputHandler>();
@@ -127,6 +128,10 @@ public class ModeFirstPerson : MonoBehaviour
 
     void Update()
     {
+        if (!audioSource)
+        {
+            Debug.Log(audioSource);
+        }
         // check for Y kill
         if(!isDead && transform.position.y < killHeight)
         {

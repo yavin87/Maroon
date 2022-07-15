@@ -113,7 +113,7 @@ namespace Maroon.GlobalEntities
             DontDestroyOnLoad(this.gameObject);
 
             // TODO: Cleanup
-            _musicSource = GetComponent<AudioSource>();
+            // _musicSource = GetComponent<AudioSource>();
         }
 
         // -------------------------------------------------------------------------------------------------------------
