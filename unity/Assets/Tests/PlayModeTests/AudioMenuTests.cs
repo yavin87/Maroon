@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using GEAR.Localization;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -7,7 +6,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
 /*
  * Tests audio sliders of Main/Pause audio menu
@@ -31,6 +29,7 @@ namespace Tests.PlayModeTests
 
         private AudioSource _audioSourceComponent;
         private Slider _audioSlider;
+        private Button _audioButton;
         
         private const string MainMenuScenePath = "Assets/Maroon/scenes/special/MainMenu.pc.unity";
 
@@ -57,8 +56,8 @@ namespace Tests.PlayModeTests
             
             // Click Audio button to open audio menu
             string mainMenuAudioButtonLabel = LanguageManager.Instance.GetString("Menu Audio");
-            var audioButton = GetButtonViaText(mainMenuAudioButtonLabel);
-            audioButton.onClick.Invoke();
+            _audioButton = GetButtonViaText(mainMenuAudioButtonLabel);
+            _audioButton.onClick.Invoke();
             
             yield return null;
             
@@ -78,59 +77,71 @@ namespace Tests.PlayModeTests
             yield return new ExitPlayMode();
         }
         
-        [UnityTest, Description("On opening audio menu, slider value and audio source volume must match")]
+        [UnityTest, Order(1), Description("On opening audio menu, slider value and audio source volume must match")]
         public IEnumerator WhenOpenAudioMenuInitialSliderValueEqualsAudioSourceVolume()
         {
             var audioSourceInitialVolume = _audioSourceComponent.volume;
             var audioSliderInitialValue = _audioSlider.value;
 
             Assert.AreEqual(audioSourceInitialVolume, audioSliderInitialValue, 0.0, 
-                "Mismatched initial values of AudioSource.volume and Slider.value");
+                $"Initial values should be equal: slider '{_sliderName}' value and audio source '{_audioSourceName}' volume");
             
             yield return null;
         }
         
-        
-        // 1. change value, check if ok
-        [UnityTest]
-        public IEnumerator WhenChangeSliderValueThenAudioSourceVolumeMatches([Values(0f, 0.25f, 0.5f, 0.75f, 0.9999999f)] float volumeLevel)
+        [UnityTest, Order(2), Description("Change the audio slider's value, then the audio source's volume must match")]
+        public IEnumerator WhenChangeSliderValueThenAudioSourceVolumeMatches()
         {
-            float newVolumeLevel = Random.Range(0f, 1f);
-            _audioSlider.value = newVolumeLevel;
+            _audioSlider.value = 0.5f;
             
             yield return null;
             
             var audioSourceVolume = _audioSourceComponent.volume;
             
-            Assert.AreEqual(newVolumeLevel, audioSourceVolume, 0.0, 
-                "After slider value change, mismatched AudioSource.volume");
+            Assert.AreEqual(_audioSlider.value, audioSourceVolume, 0.0, 
+                $"After slider '{_sliderName}' value change, mismatched audio source '{_audioSourceName}' volume");
         }
         
-        // 2. change multiple times, check if ok
-        [UnityTest]
+        [UnityTest, Order(3), Description("Change the audio slider's value multiple times, then the audio source's volume must match")]
         public IEnumerator WhenChangeSliderValueMultipleTimesThenAudioSourceVolumeMatches()
         {
-            float newVolumeLevel = 0.5f;
-            
-            var slider = GetComponentInChildrenFromGameObjectWithName<Slider>("preMenuButtonSliderFx");
-            slider.value = newVolumeLevel;
+            float[] volumeLevels = { 0f,  0.25f, 1/3f, 2/3f, 0.75f, 1f };
+
+            // https://docs.nunit.org/articles/nunit/writing-tests/assertions/multiple-asserts.html
+            // Assert multiple not supported by Unity test framework :(
+            foreach (var volumeLevel in volumeLevels)
+            {
+                _audioSlider.value = volumeLevel;
+        
+                yield return null;
+        
+                var audioSourceVolume = _audioSourceComponent.volume;
+                
+                Assert.AreEqual(_audioSlider.value, audioSourceVolume, 0.0, 
+                    $"After slider '{_sliderName}' value change, mismatched audio source '{_audioSourceName}' volume");
+            }
+        }
+        
+        [UnityTest, Order(4), Description("Change the audio slider's value, then reload menu, the audio source's volume must match")]
+        public IEnumerator WhenChangeSliderValueThenReloadMenuAudioSourceVolumeMatches()
+        {
+            var expectedVolume = 0.5f;
+            _audioSlider.value = expectedVolume;
             
             yield return null;
             
-            var gameObjectName = "SoundEffectSource";
-            var audioSourceGameObject = GameObject.Find(gameObjectName);
-            Assert.NotNull(audioSourceGameObject, $"Could not find GameObject '{gameObjectName}'");
+            // Reload menu
+            _audioButton.onClick.Invoke();
+            
+            yield return null;
+            
+            // Get newly created slider
+            _audioSlider = GetComponentInChildrenFromGameObjectWithName<Slider>(_sliderName);
 
-            var audioSourceComponent = audioSourceGameObject.GetComponent<AudioSource>();
-            Assert.NotNull(audioSourceComponent, $"Could not find AudioSource component in GameObject '{gameObjectName}'");
-            
-            var audioSourceVolume = audioSourceComponent.volume;
-            
-            Assert.AreEqual(newVolumeLevel, audioSourceVolume, 0.0, 
-                "After slider value change, mismatched AudioSource.volume");
+            Assert.AreEqual(expectedVolume, _audioSlider.value, 0.0, 
+                $"After audio menu reload, unexpected slider '{_sliderName}' value");
+            Assert.AreEqual(expectedVolume, _audioSourceComponent.volume, 0.0, 
+                $"After audio menu reload, unexpected audio source '{_audioSourceName}' volume");
         }
-        
-        // TODO further test cases
-        // 3. change value and reload menu (switch to other, or press button again), check if ok
     }
 }
