@@ -100,10 +100,10 @@ namespace Tests.PlayModeTests
             // But Assert.Multiple() is not (yet) supported by Unity test framework :(
             // Source: https://stackoverflow.com/a/52231966/7262963
             Assert.AreEqual(_musicAudioSliderComponent.value, _musicAudioSourceComponent.volume, 0.0, 
-                $"Initial Slider and AudioSource values must be equal");
+                $"Initial music Slider and AudioSource values must be equal");
             
             Assert.AreEqual(_fxAudioSliderComponent.value, _fxAudioSourceComponent.volume, 0.0, 
-                $"Initial Slider and AudioSource values must be equal");
+                $"Initial FX Slider and AudioSource values must be equal");
             yield return null;
         }
         
@@ -149,8 +149,7 @@ namespace Tests.PlayModeTests
         {
             float[] expectedMusicVolumeLevels = { 0f,  0.25f, 1/3f, 0.5f, 2/3f, 0.75f, 1f };
             float[] expectedFxVolumeLevels = expectedMusicVolumeLevels.Reverse().ToArray();
-            Assert.AreEqual(expectedMusicVolumeLevels.Length, expectedFxVolumeLevels.Length);
-            
+
             for (int i = 0; i < expectedMusicVolumeLevels.Length; i++)
             {
                 var expectedMusicVolume = expectedMusicVolumeLevels[i];
@@ -177,7 +176,7 @@ namespace Tests.PlayModeTests
         }
         
         [UnityTest, Order(6), Description("Change audio sliders' values, then reload menu, the audio sources' volume must match")]
-        public IEnumerator WhenChangeSlidersValuesAndReloadSubMenu_ThenAudioSourcesVolumeLevelsMatch()
+        public IEnumerator WhenChangeSliderValuesAndReloadSubMenu_ThenAudioSourcesVolumeLevelsMatch()
         {
             var expectedMusicVolume = 0.8f;
             var expectedFxVolume = 0.7f;
